@@ -9,3 +9,4 @@
 #include <vector>
 #include <algorithm>
 #include <stdint.h>
+#include <functional>
