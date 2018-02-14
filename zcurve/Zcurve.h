@@ -19,7 +19,7 @@ namespace hj {
 		void order2D(const Vector2f &pmin, const Vector2f &pmax,
 			std::vector<Vector2f>& arr,
 			int bits,
-			const std::function< void(void)>& progressUpdate) {
+			const std::function< void(void)>& progressUpdate = 0) {
 			this->K = bits;
 
 			std::vector<std::pair<Vector2f, uint64_t>> ordered(arr.size());
@@ -30,7 +30,8 @@ namespace hj {
 			}
 
 			std::sort(ordered.begin(), ordered.end(), [&progressUpdate](auto lhs, auto rhs) {
-				progressUpdate();
+				if (progressUpdate)
+					progressUpdate();
 				return lhs.second < rhs.second;
 			});
 
