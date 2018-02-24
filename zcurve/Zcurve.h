@@ -3,6 +3,7 @@
 #include "Header.h"
 #include "Vector.h"
 
+#define NUM_CELL_ZCURVE2D 1073741824
 #define NUM_CELL_ZCURVE3D 1048576
 #define NUM_CELL_ZCURVE5D 4096
 #define NUM_CELL_ZCURVE6D 1024
@@ -24,8 +25,8 @@ namespace hj {
 
 			std::vector<std::pair<Vector2f, uint64_t>> ordered(arr.size());
 			for (auto i = 0u; i < arr.size(); ++i) {
-				auto p = normalize<Vector2ui>(arr[i], pmin, pmax);
-				uint64_t key = getMortonKey2D(p);
+				auto p = normalize(arr[i], pmin, pmax);
+				uint64_t key = getMortonKey(p);
 				ordered[i] = std::make_pair(arr[i], key);
 			}
 
@@ -48,8 +49,8 @@ namespace hj {
 
 			std::vector<std::pair<Vector3f, uint64_t>> ordered(arr.size());
 			for (auto i = 0u; i < arr.size(); ++i) {
-				auto p = normalize<Vector3ui>(arr[i], pmin, pmax);
-				uint64_t key = getMortonKey3D(p);
+				auto p = normalize(arr[i], pmin, pmax);
+				uint64_t key = getMortonKey(p);
 				ordered[i] = std::make_pair(arr[i], key);
 			}
 
@@ -63,29 +64,33 @@ namespace hj {
 			}
 		}
 
-		uint64_t getMortonKey2D(Vector2ui p) {
+		template <typename T, int nDimensions>
+		uint64_t getMortonKey(const Vector<T, nDimensions>& p) const {
 			uint64_t result = 0;
 
 			for (int i = 0; i < K; i++) {
-				result |= (p[0] & 1ULL << i) << i | (p[1] & 1ULL << i) << (i + 1);
+				for (int j = 0; j < nDimensions; ++j) {
+					result |= ((p[j] & 1ULL << i) << (i + j));
+				}
 			}
+
 			return result;
 		}
 
-		uint64_t getMortonKey3D(Vector3ui p) {
-			uint64_t result = 0;
-
-			for (int i = 0; i < K; i++) {
-				result |= (p[0] & 1ULL << i) << i | (p[1] & 1ULL << i) << (i + 1) | (p[2] & 1ULL << i) << (i + 2);
-			}
-			return result;
-		}
-
-		template <typename T, typename U>
-		T normalize(const U &point, const U &pmin, const U &pmax) {
+		template <typename T, int nDimensions>
+		Vector<uint64_t, nDimensions> normalize(const Vector<T, nDimensions> &point, const Vector<T, nDimensions> &pmin, const Vector<T, nDimensions> &pmax) {
 			auto origin = (point - pmin);
 			auto size = (pmax - pmin);
-			auto n = (origin / size) * NUM_CELL_ZCURVE3D;
+			auto n = (origin / size);
+			
+			if (nDimensions == 2) n *= NUM_CELL_ZCURVE2D;
+			else if (nDimensions == 3) n *= NUM_CELL_ZCURVE3D;
+			else if (nDimensions == 5) n *= NUM_CELL_ZCURVE5D;
+			else if (nDimensions == 6) n *= NUM_CELL_ZCURVE6D;
+			else if (nDimensions == 8) n *= NUM_CELL_ZCURVE8D;
+			else n = n * 0;
+
+			std::cout << n << std::endl;
 			// floor
 			return n.floor();
 		}
