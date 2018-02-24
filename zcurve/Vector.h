@@ -3,86 +3,113 @@
 #include "Header.h"
 
 namespace hj {
-	template <typename T>
-	class Vector2 {
+	template <typename T, int nDimensions>
+	class Vector {
 	public:
-		Vector2() : v{ T(),T() } {}
-		Vector2(T x, T y) : v{ x, y } {}
+		Vector() {}
+		Vector(T x, T y) : v{ x, y } {}
+		Vector(T x, T y, T z) : v{ x, y, z } {}
 
 		T operator[] (int ind) const {
-			assert(ind < 2);
+			assert(ind < nDimensions);
 			return v[ind];
 		}
-		Vector2<T> operator+ (const Vector2<T> &rhs) const {
-			return Vector2<T>(v[0] + rhs[0], v[1] + rhs[1]);
+		void set(int i, T val) {
+			this->v[i] = val;
 		}
-		Vector2<T> operator- (const Vector2<T> &rhs) const {
-			return Vector2<T>(v[0] - rhs[0], v[1] - rhs[1]);
+		Vector& operator+=(const Vector& rhs) {
+			for (int i = 0; i < nDimensions; ++i) {
+				v[i] += rhs[i];
+			}
+			return *this;
 		}
-		Vector2<T> operator* (const T rhs) const {
-			return Vector2<T>(v[0] * rhs, v[1] * rhs);
+		Vector& operator-=(const Vector& rhs) {
+			for (int i = 0; i < nDimensions; ++i) {
+				v[i] -= rhs[i];
+			}
+			return *this;
 		}
-		Vector2<T> operator/ (const T rhs) const {
-			return Vector2<T>(v[0] / rhs, v[1] / rhs);
+		Vector& operator*=(const Vector& rhs) {
+			for (int i = 0; i < nDimensions; ++i) {
+				v[i] *= rhs[i];
+			}
+			return *this;
 		}
-		Vector2<T> operator/ (const Vector2<T> &rhs) const {
-			return Vector2<T>(v[0] / rhs[0], v[1] / rhs[1]);
+		Vector& operator/=(const Vector &rhs) {
+			for (int i = 0; i < nDimensions; ++i) {
+				v[i] /= rhs[i];
+			}
+			return *this;
+		}
+
+		Vector operator+ (const Vector &rhs) const {
+			Vector ret(*this);
+			return ret += rhs;
+		}
+		Vector operator- (const Vector &rhs) const {
+			Vector ret(*this);
+			return ret -= rhs;
+		}
+		Vector operator* (const Vector &rhs) const {
+			Vector ret(*this);
+			return ret *= rhs;
+		}
+		Vector operator/ (const Vector &rhs) const {
+			Vector ret(*this);
+			return ret /= rhs;
+		}
+
+		template <typename U>
+		Vector operator* (U rhs) const {
+			Vector ret(*this);
+			for (int i = 0; i < nDimensions; ++i) {
+				ret.set(i, v[i] * rhs);
+			}
+			return ret;
+		}
+		template <typename U>
+		Vector& operator*=(const U& rhs) {
+			for (int i = 0; i < nDimensions; ++i) {
+				v[i] *= rhs;
+			}
+			return *this;
 		}
 
 		std::string toString() const {
-			return std::to_string(v[0]) + ", " + v[1];
+			auto str = std::to_string(v[0]);
+			for (int i = 0; i < nDimensions; ++i) {
+				str += ", " + v[i];
+			}
+			return str;
 		}
 
-		Vector2<uint64_t> floor() const {
-			return Vector2<uint64_t>(uint64_t(v[0]), uint64_t(v[1]));
+		Vector<uint64_t, nDimensions> floor() const {
+			Vector<uint64_t, nDimensions> ret;
+			for (int i = 0; i < nDimensions; ++i) {
+				ret.set(i, uint64_t(this->v[i]));
+			}
+			return ret;
 		}
 
-	private:
-		T v[2];
-	};
-
-	typedef Vector2<float_t> Vector2f;
-	typedef Vector2<uint64_t> Vector2ui;
-
-	template <typename T>
-	class Vector3 {
-	public:
-		Vector3() : v{ T(),T(),T() } {}
-		Vector3(T x, T y, T z) : v{ x, y, z } {}
-
-		T operator[] (int ind) const {
-			assert(ind < 3);
-			return v[ind];
-		}
-		Vector3<T> operator+ (const Vector3<T> &rhs) const {
-			return Vector3<T>(v[0] + rhs[0], v[1] + rhs[1], v[2] + rhs[2]);
-		}
-		Vector3<T> operator- (const Vector3<T> &rhs) const {
-			return Vector3<T>(v[0] - rhs[0], v[1] - rhs[1], v[2] - rhs[2]);
-		}
-		Vector3<T> operator* (const T rhs) const {
-			return Vector3<T>(v[0] * rhs, v[1] * rhs, v[2] * rhs);
-		}
-		Vector3<T> operator/ (const T rhs) const {
-			return Vector3<T>(v[0] / rhs, v[1] / rhs, v[2] / rhs);
-		}
-		Vector3<T> operator/ (const Vector3<T> &rhs) const {
-			return Vector3<T>(v[0] / rhs[0], v[1] / rhs[1], v[2] / rhs[2]);
-		}
-
-		std::string toString() const {
-			return std::to_string(v[0]) + ", " + v[1] + ", " + v[2];
-		}
-
-		Vector3<uint64_t> floor() const {
-			return Vector3<uint64_t>(uint64_t(v[0]), uint64_t(v[1]), uint64_t(v[2]));
-		}
+		template <typename U, int nD>
+		friend std::ostream& operator<<(std::ostream&, const Vector<U, nD>&);
 
 	private:
-		T v[3];
+		std::array<T, nDimensions> v;
 	};
 
-	typedef Vector3<float_t> Vector3f;
-	typedef Vector3<uint64_t> Vector3ui;
+	typedef Vector<float_t, 2> Vector2f;
+	typedef Vector<uint64_t, 2> Vector2ui;
+
+	typedef Vector<float_t, 3> Vector3f;
+	typedef Vector<uint64_t, 3> Vector3ui;
+
+	template <typename T, int nDimensions>
+	std::ostream& operator<<(std::ostream& os, const hj::Vector<T, nDimensions>& v) {
+		os << "[" << v[0];
+		for (int i = 1; i < nDimensions; ++i) {
+			os << ", " << v[i] << "]";
+		}
+		return os;
+	}
 }
-

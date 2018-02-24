@@ -10,3 +10,4 @@
 #include <algorithm>
 #include <stdint.h>
 #include <functional>
+#include <array>
