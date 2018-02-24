@@ -110,6 +110,7 @@ namespace hj {
 		for (int i = 1; i < nDimensions; ++i) {
 			os << ", " << v[i] << "]";
 		}
+		os << std::endl;
 		return os;
 	}
 }

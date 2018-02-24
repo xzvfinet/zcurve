@@ -82,7 +82,7 @@ namespace hj {
 			auto origin = (point - pmin);
 			auto size = (pmax - pmin);
 			auto n = (origin / size);
-			
+
 			if (nDimensions == 2) n *= NUM_CELL_ZCURVE2D;
 			else if (nDimensions == 3) n *= NUM_CELL_ZCURVE3D;
 			else if (nDimensions == 5) n *= NUM_CELL_ZCURVE5D;
@@ -90,7 +90,6 @@ namespace hj {
 			else if (nDimensions == 8) n *= NUM_CELL_ZCURVE8D;
 			else n = n * 0;
 
-			std::cout << n << std::endl;
 			// floor
 			return n.floor();
 		}
