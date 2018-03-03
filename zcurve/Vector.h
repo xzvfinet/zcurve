@@ -9,6 +9,12 @@ namespace hj {
 		Vector() {}
 		Vector(T x, T y) : v{ x, y } {}
 		Vector(T x, T y, T z) : v{ x, y, z } {}
+		Vector(pbrt::Point2<T> p) : v{ p.x, p.y } {}
+		template <typename U>
+		Vector(pbrt::Point2<U> p) : v{ T(p.x), T(p.y) } {}
+		Vector(pbrt::Point3<T> p) : v{ p.x, p.y } {}
+		template <typename U>
+		Vector(pbrt::Point3<U> p) : v{ T(p.x), T(p.y) } {}
 
 		T operator[] (int ind) const {
 			assert(ind < nDimensions);

@@ -23,11 +23,14 @@ namespace hj {
 			const std::function< void(void)>& progressUpdate = 0) {
 			this->K = bits;
 
-			std::vector<std::pair<Vector2f, uint64_t>> ordered(arr.size());
+			// this array cannot have reference as element type
+			// because std::sort assumes the copy
+			std::vector<std::pair<Vector2f, uint64_t>> ordered;
+			ordered.reserve(arr.size());
 			for (auto i = 0u; i < arr.size(); ++i) {
 				auto p = normalize(arr[i], pmin, pmax);
 				uint64_t key = getMortonKey(p);
-				ordered[i] = std::make_pair(arr[i], key);
+				ordered.push_back({ arr[i], key });
 			}
 
 			std::sort(ordered.begin(), ordered.end(), [&progressUpdate](auto lhs, auto rhs) {
@@ -78,7 +81,7 @@ namespace hj {
 		}
 
 		template <typename T, int nDimensions>
-		Vector<uint64_t, nDimensions> normalize(const Vector<T, nDimensions> &point, const Vector<T, nDimensions> &pmin, const Vector<T, nDimensions> &pmax) {
+		Vector<uint64_t, nDimensions> normalize(const Vector<T, nDimensions> &point, const Vector<T, nDimensions> &pmin, const Vector<T, nDimensions> &pmax) const {
 			auto origin = (point - pmin);
 			auto size = (pmax - pmin);
 			auto n = (origin / size);
