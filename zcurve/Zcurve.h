@@ -58,7 +58,33 @@ namespace hj {
 			}
 
 			std::sort(ordered.begin(), ordered.end(), [&progressUpdate](auto lhs, auto rhs) {
-				progressUpdate();
+				if (progressUpdate)
+					progressUpdate();
+				return lhs.second < rhs.second;
+			});
+
+			for (auto i = 0u; i < arr.size(); ++i) {
+				arr[i] = ordered[i].first;
+			}
+		}
+
+		template <typename T, int nDimensions>
+		void order(const Vector<T, nDimensions> &pmin, const Vector<T, nDimensions> &pmax,
+			std::vector<Vector<T, nDimensions>>& arr,
+			int bits,
+			const std::function< void(void)>& progressUpdate) {
+			this->K = bits;
+
+			std::vector<std::pair<Vector<T, nDimensions>, uint64_t>> ordered(arr.size());
+			for (auto i = 0u; i < arr.size(); ++i) {
+				auto p = normalize(arr[i], pmin, pmax);
+				uint64_t key = getMortonKey(p);
+				ordered[i] = std::make_pair(arr[i], key);
+			}
+
+			std::sort(ordered.begin(), ordered.end(), [&progressUpdate](auto lhs, auto rhs) {
+				if (progressUpdate)
+					progressUpdate();
 				return lhs.second < rhs.second;
 			});
 

@@ -9,12 +9,19 @@ namespace hj {
 		Vector() {}
 		Vector(T x, T y) : v{ x, y } {}
 		Vector(T x, T y, T z) : v{ x, y, z } {}
+		Vector(T x, T y, T z, T a, T b) : v{ x, y, z, a, b } {}
+
 		Vector(pbrt::Point2<T> p) : v{ p.x, p.y } {}
 		template <typename U>
 		Vector(pbrt::Point2<U> p) : v{ T(p.x), T(p.y) } {}
-		Vector(pbrt::Point3<T> p) : v{ p.x, p.y } {}
+
+		Vector(pbrt::Point3<T> p) : v{ p.x, p.y, p.z } {}
 		template <typename U>
-		Vector(pbrt::Point3<U> p) : v{ T(p.x), T(p.y) } {}
+		Vector(pbrt::Point3<U> p) : v{ T(p.x), T(p.y), T(p.z) } {}
+
+		Vector(pbrt::Point2<T> p1, pbrt::Point3<T> p2) : v{ p1.x, p1.y, p2.x, p2.y, p2.z } {}
+		template <typename U>
+		Vector(pbrt::Point2<U> p1, pbrt::Point3<U> p2) : v{ T(p1.x), T(p1.y),T(p2.x), T(p2.y), T(p2.z) } {}
 
 		T operator[] (int ind) const {
 			assert(ind < nDimensions);
@@ -110,13 +117,16 @@ namespace hj {
 	typedef Vector<float_t, 3> Vector3f;
 	typedef Vector<uint64_t, 3> Vector3ui;
 
+	typedef Vector<float_t, 5> Vector5f;
+	typedef Vector<uint64_t, 5> Vector5ui;
+
 	template <typename T, int nDimensions>
 	std::ostream& operator<<(std::ostream& os, const hj::Vector<T, nDimensions>& v) {
 		os << "[" << v[0];
 		for (int i = 1; i < nDimensions; ++i) {
-			os << ", " << v[i] << "]";
+			os << ", " << v[i];
 		}
-		os << std::endl;
+		os << "]" << std::endl;
 		return os;
 	}
 }
