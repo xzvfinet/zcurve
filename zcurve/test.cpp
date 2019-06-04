@@ -5,29 +5,24 @@
 
 using namespace std;
 
-typedef Vector3f item;
-
-inline float myrand() {
-	return float(rand()) / RAND_MAX;
-}
+typedef hj::Vector3f item;
 
 int main() {
+    hj::Zcurve zcurve;
+    vector<item> arr;
 
-	auto zcurve = make_unique<Zcurve>(Vector3f(0,0,0), Vector3f(100,100,100));
-	vector<item> arr;
+    for (int i = 0; i <= 2; ++i)
+        for (int j = 0; j <= 2; ++j)
+            for (int k = 0; k <= 2; ++k) 
+				arr.push_back(item(i, j, k));
 
-	const int NUM = 100;
-	for (int i = 0; i < NUM; ++i) {
-		item a(myrand(), myrand(), myrand());
-		arr.push_back(a);
-	}
+    // WARNING! Exact boundary points (e.g. (0,0) or (5,5)) cause wrong ordering
+    // so make sure that the range is larger than the actual values
+    zcurve.order<float, 3>(hj::Vector3f(0), hj::Vector3f(2), arr, 20);
 
-	zcurve->order3D(arr, 20);
+    for (auto el : arr) {
+        cout << el;
+    }
 
-	for (auto el : arr) {
-		cout << el[0] << " " << el[1] << " " << el[2] << endl;
-	}
-
-	system("pause");
-	return 0;
+    return 0;
 }
