@@ -1,13 +1,13 @@
 #pragma once
 
+#include <stdint.h>
+#include <algorithm>
+#include <array>
+#include <cassert>
+#include <functional>
 #include <iostream>
 #include <memory>
-#include <tuple>
 #include <stdexcept>
 #include <string>
-#include <cassert>
+#include <tuple>
 #include <vector>
-#include <algorithm>
-#include <stdint.h>
-#include <functional>
-#include <array>
