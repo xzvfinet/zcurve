@@ -110,10 +110,10 @@ class Vector {
         return str;
     }
 
-    Vector<uint64_t, nDimensions> floor() const {
-        Vector<uint64_t, nDimensions> ret;
+    Vector<uint128_t, nDimensions> floor() const {
+        Vector<uint128_t, nDimensions> ret;
         for (int i = 0; i < nDimensions; ++i) {
-            ret.set(i, uint64_t(this->v[i]));
+            ret.set(i, uint128_t(this->v[i]));
         }
         return ret;
     }
@@ -126,13 +126,13 @@ class Vector {
 };
 
 typedef Vector<float, 2> Vector2f;
-typedef Vector<uint64_t, 2> Vector2ui;
+typedef Vector<uint128_t, 2> Vector2ui;
 
 typedef Vector<float, 3> Vector3f;
-typedef Vector<uint64_t, 3> Vector3ui;
+typedef Vector<uint128_t, 3> Vector3ui;
 
 typedef Vector<float, 5> Vector5f;
-typedef Vector<uint64_t, 5> Vector5ui;
+typedef Vector<uint128_t, 5> Vector5ui;
 
 template <typename T, int nDimensions>
 std::ostream& operator<<(std::ostream& os,

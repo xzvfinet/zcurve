@@ -11,3 +11,6 @@
 #include <string>
 #include <tuple>
 #include <vector>
+
+#include <boost/multiprecision/cpp_int.hpp>
+using namespace boost::multiprecision;

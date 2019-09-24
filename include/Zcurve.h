@@ -10,10 +10,14 @@
 #define NUM_CELL_ZCURVE6D 1024        // 2^10 (10 bits * 6D = 60 bits)
 #define NUM_CELL_ZCURVE8D 8           // 2^3  (3 bits  * 8D = 24 bits)
 
+#define NUM_CELL_ZCURVE9D 16384       // 2^14 (14 bits * 9D = 126 bits)
+#define NUM_CELL_ZCURVE12D 1024       // 2^10 (10 bits * 12D = 120 bits)
+#define NUM_CELL_ZCURVE15D 256        // 2^10 ( 8 bits * 15D = 120 bits)
+
 namespace hj {
 class Zcurve {
     int K;
-    const float eps = 0.000001f;
+	const float eps = 1e-6f;
 
   public:
     Zcurve() {}
@@ -25,18 +29,18 @@ class Zcurve {
                const std::function<void(void)>& progressUpdate = 0) {
         this->K = bits;
 
-        std::vector<std::pair<Vector<T, nDimensions>, uint64_t>> ordered(
+        std::vector<std::pair<Vector<T, nDimensions>, uint128_t>> ordered(
             arr.size());
         for (auto i = 0u; i < arr.size(); ++i) {
             auto p = normalize(arr[i], pmin - eps, pmax + eps);
-            uint64_t key = getMortonKey(p);
+            uint128_t key = getMortonKey(p);
             ordered[i] = std::make_pair(arr[i], key);
         }
 
         std::sort(ordered.begin(), ordered.end(),
                   [&progressUpdate](
-                      std::pair<Vector<T, nDimensions>, uint64_t>& lhs,
-                      std::pair<Vector<T, nDimensions>, uint64_t>& rhs) {
+                      std::pair<Vector<T, nDimensions>, uint128_t>& lhs,
+                      std::pair<Vector<T, nDimensions>, uint128_t>& rhs) {
                       if (progressUpdate) progressUpdate();
                       return lhs.second < rhs.second;
                   });
@@ -47,8 +51,8 @@ class Zcurve {
     }
 
     template <typename T, int nDimensions>
-    uint64_t getMortonKey(Vector<T, nDimensions>& p) const {
-        uint64_t result = 0;
+    uint128_t getMortonKey(Vector<T, nDimensions>& p) const {
+        uint128_t result = 0;
 
         if (nDimensions == 2)
             p *= NUM_CELL_ZCURVE2D;
@@ -60,10 +64,14 @@ class Zcurve {
             p *= NUM_CELL_ZCURVE6D;
         else if (nDimensions == 8)
             p *= NUM_CELL_ZCURVE8D;
+		else if (nDimensions == 9)
+			p *= NUM_CELL_ZCURVE9D;
+		else if (nDimensions == 12)
+			p *= NUM_CELL_ZCURVE12D;
         else
             p = p * 0;
 
-        Vector<uint64_t, nDimensions> n = p.floor();
+        Vector<uint128_t, nDimensions> n = p.floor();
 
         for (int i = 0; i < K; i++) {
             for (int j = 0; j < nDimensions; ++j) {
