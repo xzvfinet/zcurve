@@ -12,7 +12,6 @@ file(GLOB include_files
     "include/*.h"
     "include/*.hpp"
 )
-message(${include_files})
 add_executable(zcurve src/test.cpp ${include_files})
 
 target_include_directories(zcurve PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
