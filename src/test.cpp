@@ -8,10 +8,7 @@
 
 using namespace std;
 
-const int DIM = 3;
-const int NUM_RANDOM_DATA = 10000;
 const float eps = 1e-6;
-using item = hj::Vector<float, DIM>;
 using hclock = chrono::high_resolution_clock;
 using duration = chrono::duration<double>;
 
@@ -28,7 +25,84 @@ std::array<float, n> create_random_data() {
 	return v;
 }
 
+bool dimensionTimeComparison(bool print) {
+	int numData = 10000;
+
+	{
+		hj::Zcurve<3, float, uint64_t> zcurve3;
+		using vec3 = hj::Vector<float, 3>;
+		vec3 pmin(0.f), pmax(1.f);
+		std::vector<vec3> arr1;
+		for (int i = 0; i < numData; ++i)
+			arr1.push_back(create_random_data<3>());
+
+		auto start = hclock::now();
+		zcurve3.order(vec3(0.f) - eps, vec3(1.f) + eps, arr1);
+		duration time = hclock::now() - start;
+		std::cout << "64 bits - 3D took " << time.count() << std::endl;
+	}
+
+	{
+		hj::Zcurve<5, float, uint64_t> zcurve5;
+		using vec5 = hj::Vector<float, 5>;
+		vec5 pmin(0.f), pmax(1.f);
+		std::vector<vec5> arr5;
+		for (int i = 0; i < numData; ++i)
+			arr5.push_back(create_random_data<5>());
+
+		auto start = hclock::now();
+		zcurve5.order(vec5(0.f) - eps, vec5(1.f) + eps, arr5);
+		duration time = hclock::now() - start;
+		std::cout << "64 bits - 5D took " << time.count() << std::endl;
+	}
+
+	{
+		hj::Zcurve<3, float, uint128_t> zcurve3;
+		using vec3 = hj::Vector<float, 3>;
+		std::vector<vec3> arr2;
+		for (int i = 0; i < numData; ++i)
+			arr2.push_back(create_random_data<3>());
+
+		auto start = hclock::now();
+		zcurve3.order(vec3(0.f) - eps, vec3(1.f) + eps, arr2);
+		duration time = hclock::now() - start;
+		std::cout << "128 bits - 3D took " << time.count() << std::endl;
+	}
+
+	{
+		hj::Zcurve<5, float, uint128_t> zcurve5;
+		using vec5 = hj::Vector<float, 5>;
+		std::vector<vec5> arr2;
+		for (int i = 0; i < numData; ++i)
+			arr2.push_back(create_random_data<5>());
+
+		auto start = hclock::now();
+		zcurve5.order(vec5(0.f) - eps, vec5(1.f) + eps, arr2);
+		duration time = hclock::now() - start;
+		std::cout << "128 bits - 5D took " << time.count() << std::endl;
+	}
+
+	{
+		hj::Zcurve<18, float, uint128_t> zcurve18;
+		using vec18 = hj::Vector<float, 18>;
+		std::vector<vec18> arr2;
+		for (int i = 0; i < numData; ++i)
+			arr2.push_back(create_random_data<18>());
+
+		auto start = hclock::now();
+		zcurve18.order(vec18(0.f) - eps, vec18(1.f) + eps, arr2);
+		duration time = hclock::now() - start;
+		std::cout << "128 bits - 18D took " << time.count() << std::endl;
+	}
+
+	return false;
+}
+
 bool higherPrecisionTest(bool print) {
+	const int DIM = 3;
+	const int NUM_RANDOM_DATA = 10000;
+	using item = hj::Vector<float, DIM>;
+
 	// Generate Data
 	vector<item> arr;
 
@@ -133,6 +207,7 @@ bool magicBitsTest(bool print) {
 	/////////////////////////////////////////////////////////////
 	/* TEST1. Magic bits *****************************************/
 	/////////////////////////////////////////////////////////////
+	const int DIM = 3;
 	hj::Zcurve<DIM, float, uint64_t> zcurve0;
 	const int totalBits = 32;
 	const int fieldBits = 10;
@@ -150,13 +225,14 @@ bool magicBitsTest(bool print) {
 
 int main() {
 
-	if (higherPrecisionTest(false)) {
-		std::cout << "higherPrecisionTest passed." << std::endl;
-	}
-	else {
-		std::cout << "higherPrecisionTest failed." << std::endl;
-	}
+	//if (higherPrecisionTest(false)) {
+	//	std::cout << "higherPrecisionTest passed." << std::endl;
+	//}
+	//else {
+	//	std::cout << "higherPrecisionTest failed." << std::endl;
+	//}
 
+	dimensionTimeComparison(false);
 
 
 	return 0;
