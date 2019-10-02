@@ -1,17 +1,9 @@
-#pragma once
+﻿#pragma once
 
 #include "Header.h"
 #include "Vector.h"
 
 namespace hj {
-	template<typename Type>
-	int bits_of_type =
-		(std::is_same<Type, uint8_t>::value) ? 8 :
-		(std::is_same<Type, uint16_t>::value) ? 16 :
-		(std::is_same<Type, uint32_t>::value) ? 32 :
-		(std::is_same<Type, uint64_t>::value) ? 64 :
-		(std::is_same<Type, uint128_t>::value) ? 128 : 0;
-
 	template <int Dimension, typename DataType, typename UnsignedIntegerType = uint64_t>
 	class Zcurve {
 		static_assert(Dimension > 0, "Parameter 'Dimension' must be > 0.");
@@ -19,12 +11,30 @@ namespace hj {
 			"UnsignedIntegerType instance cannot be constructed using DataType.");
 
 		using _Vector = Vector<DataType, Dimension>;
+		using bigfloat = boost::multiprecision::cpp_dec_float_50;
 
+		const int numBits =
+			(std::is_same<UnsignedIntegerType, uint8_t>::value) ? 8 :
+			(std::is_same<UnsignedIntegerType, uint16_t>::value) ? 16 :
+			(std::is_same<UnsignedIntegerType, uint32_t>::value) ? 32 :
+			(std::is_same<UnsignedIntegerType, uint64_t>::value) ? 64 :
+			(std::is_same<UnsignedIntegerType, uint128_t>::value) ? 128 : 0;
+		const int halfNumBits = numBits / 2;
 		const float eps = 1e-6f;
-		const UnsignedIntegerType maxCells = UnsignedIntegerType(1) << (bits_of_type<UnsignedIntegerType> / Dimension);
+		const UnsignedIntegerType maxCells = UnsignedIntegerType(1) << (numBits / Dimension);
+		const int fieldBits = numBits / Dimension; // use possible maximum number of bits for each field
+		const int numMagicBits = (int)log2(fieldBits) + 1;
+		const UnsignedIntegerType One = 1;
+
+		std::vector<UnsignedIntegerType> magicBits;
 
 	public:
 		Zcurve() {
+			std::cout << "\t[Initialization of Z-Curve]\n" <<
+				"Use " << numBits << " bits for " << Dimension << " dimension of data\n"
+				<< "Each field uses: " << fieldBits << " bits" << std::endl;
+			magicBits.resize(numMagicBits);
+			getMagicBits(&(magicBits[0]), numBits, fieldBits, Dimension);
 		}
 
 		// For arbtrary type of element with accessor
@@ -34,7 +44,7 @@ namespace hj {
 			const _Vector&										pmax,
 			std::vector<ArrayElementType>&						arr,
 			const std::function<_Vector&(ArrayElementType&)>&	accessor = 0,
-			const std::function<void(void)>&					progressUpdate = 0)
+			const std::function<void(void)>&					progressUpdate = 0) const
 		{
 			std::vector<std::pair<_Vector, UnsignedIntegerType>> ordered(
 				arr.size());
@@ -66,7 +76,7 @@ namespace hj {
 			const _Vector&								pmax,
 			std::vector<_Vector>&						arr,
 			const std::function<_Vector&(_Vector&)>&	accessor,
-			const std::function<void(void)>&			progressUpdate)
+			const std::function<void(void)>&			progressUpdate) const
 		{
 			std::vector<std::pair<_Vector, UnsignedIntegerType>> ordered(
 				arr.size());
@@ -91,25 +101,90 @@ namespace hj {
 			}
 		}
 
-		UnsignedIntegerType getMortonKey(const _Vector& p, const _Vector& pMin, const _Vector& pMax) {
+		UnsignedIntegerType getMortonKey(const _Vector& p, const _Vector& pMin, const _Vector& pMax) const {
 			return getMortonKey(normalize(p, pMin - eps, pMax + eps));
 		}
-		UnsignedIntegerType getMortonKey(const _Vector& _p) {
+
+		// input: _p normalized point in [0, 1]
+		UnsignedIntegerType getMortonKey(const _Vector& _p) const {
 			UnsignedIntegerType result = 0;
 
-			_Vector normalized(_p);
-			normalized *= maxCells;
+			Vector<UnsignedIntegerType, Dimension> floored;
+			for (int i = 0; i < Dimension; ++i) {
+				floored[i] = UnsignedIntegerType(bigfloat(_p[i]) * bigfloat(maxCells));
+			}
 
-			auto n = normalized.floor<UnsignedIntegerType>();
+			auto bit_and = std::bit_and<UnsignedIntegerType>();
 
-			for (int i = 0; i < bits_of_type<UnsignedIntegerType>; i++) {
+			for (int i = 0; i < Dimension; i++) {
+				result |= (getMortonKey(floored[i]) << i);
+			}
+
+			return result;
+		}
+
+		inline UnsignedIntegerType getMortonKey(const UnsignedIntegerType& _v) const {
+			static auto bit_and = std::bit_and<UnsignedIntegerType>();
+
+			auto x = bit_and(_v, (One << fieldBits) - 1);	// take field bits
+			size_t remainingBits = (1ULL << int(log2(fieldBits) + 1));
+			int idx = 0;
+			while (remainingBits > 1) {
+				x = (x | (x << remainingBits)) & magicBits[idx++];
+				remainingBits /= 2;
+			}
+
+			return x;
+		}
+
+		void getMagicBits(UnsignedIntegerType* mBits, int totalBits, int fieldBits, int dimension) {
+			assert(totalBits / fieldBits == dimension);
+			assert(totalBits <= numBits);
+			assert(fieldBits < sizeof(size_t) * 8); // sizeof(size_t)*8 = 64 is the maximum size of integer 
+													// that can be used as an operand for shift operator
+
+			const UnsignedIntegerType one = 1;
+
+			// 8 bits
+			size_t leftMostBit = size_t(one << size_t(log2(fieldBits)));
+			// 8 bits with all 1
+			UnsignedIntegerType a = (one << leftMostBit) - 1;
+
+			UnsignedIntegerType b = a | (a << (leftMostBit * dimension));
+			int idx = 0;
+			mBits[idx++] = b;
+			//std::cout << b << std::endl;
+			while (leftMostBit > 1) {
+				UnsignedIntegerType c = b & (b << (leftMostBit / 2));
+				b = b ^ c ^ (c << (leftMostBit / 2) * (dimension - 1));
+				mBits[idx++] = b;
+				//std::cout << b << std::endl;
+				leftMostBit /= 2;
+			}
+		}
+
+		// For-loop basaed calculation with bugs (results are different from magic bits)
+		UnsignedIntegerType getMortonKey_for(const _Vector& p, const _Vector& pMin, const _Vector& pMax) const {
+			return getMortonKey_for(normalize(p, pMin - eps, pMax + eps));
+		}
+
+		UnsignedIntegerType getMortonKey_for(const _Vector& _p) const {
+			UnsignedIntegerType result = 0;
+
+			Vector<UnsignedIntegerType, Dimension> floored;
+			for (int i = 0; i < Dimension; ++i) {
+				floored[i] = UnsignedIntegerType(bigfloat(_p[i]) * bigfloat(maxCells));
+			}
+
+			for (int i = 0; i < numBits; i++) {
 				for (int j = 0; j < Dimension; ++j) {
-					result = result | ((n[j] & UnsignedIntegerType(1) << i) << (i + j));
+					result = result | ((floored[j] & (1ULL << i)) << (i + j));
 				}
 			}
 
 			return result;
 		}
+
 		inline static _Vector normalize(const _Vector& point,
 			const _Vector& pmin,
 			const _Vector& pmax) {

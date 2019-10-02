@@ -71,6 +71,11 @@ namespace hj {
 			}
 			return *this;
 		}
+		bool operator!=(const Vector& rhs) {
+			for (int i = 0; i < nDimensions; ++i)
+				if (v[i] != rhs[i]) return true;
+			return false;
+		}
 
 		Vector operator+(const Vector& rhs) const {
 			Vector ret(*this);
