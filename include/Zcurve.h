@@ -11,7 +11,7 @@ namespace hj {
 			"UnsignedIntegerType instance cannot be constructed using DataType.");
 
 		using _Vector = Vector<DataType, Dimension>;
-		using bigfloat = boost::multiprecision::cpp_dec_float_50;
+		using bigfloat = typename std::conditional<std::is_same<UnsignedIntegerType, uint128_t>::value, boost::multiprecision::cpp_dec_float_50, float>::type;
 
 		const int numBits =
 			(std::is_same<UnsignedIntegerType, uint8_t>::value) ? 8 :
@@ -25,6 +25,8 @@ namespace hj {
 		const int fieldBits = numBits / Dimension; // use possible maximum number of bits for each field
 		const int numMagicBits = (int)log2(fieldBits) + 1;
 		const UnsignedIntegerType One = 1;
+		const UnsignedIntegerType oneShiftedByFieldBits = One << fieldBits;
+		const size_t oneShiftedByLogFieldBits = size_t(One << int(log2(fieldBits) + 1));
 
 		std::vector<UnsignedIntegerType> magicBits;
 
@@ -101,23 +103,16 @@ namespace hj {
 			}
 		}
 
-		UnsignedIntegerType getMortonKey(const _Vector& p, const _Vector& pMin, const _Vector& pMax) const {
+		inline UnsignedIntegerType getMortonKey(const _Vector& p, const _Vector& pMin, const _Vector& pMax) const {
 			return getMortonKey(normalize(p, pMin - eps, pMax + eps));
 		}
 
 		// input: _p normalized point in [0, 1]
-		UnsignedIntegerType getMortonKey(const _Vector& _p) const {
+		inline UnsignedIntegerType getMortonKey(const _Vector& _p) const {
 			UnsignedIntegerType result = 0;
 
-			Vector<UnsignedIntegerType, Dimension> floored;
-			for (int i = 0; i < Dimension; ++i) {
-				floored[i] = UnsignedIntegerType(bigfloat(_p[i]) * bigfloat(maxCells));
-			}
-
-			auto bit_and = std::bit_and<UnsignedIntegerType>();
-
 			for (int i = 0; i < Dimension; i++) {
-				result |= (getMortonKey(floored[i]) << i);
+				result |= (getMortonKey(UnsignedIntegerType(bigfloat(_p[i]) * bigfloat(maxCells))) << i);
 			}
 
 			return result;
@@ -126,8 +121,8 @@ namespace hj {
 		inline UnsignedIntegerType getMortonKey(const UnsignedIntegerType& _v) const {
 			static auto bit_and = std::bit_and<UnsignedIntegerType>();
 
-			auto x = bit_and(_v, (One << fieldBits) - 1);	// take field bits
-			size_t remainingBits = (1ULL << int(log2(fieldBits) + 1));
+			auto x = bit_and(_v, oneShiftedByFieldBits - 1);	// take field bits
+			size_t remainingBits = oneShiftedByLogFieldBits;
 			int idx = 0;
 			while (remainingBits > 1) {
 				x = (x | (x << remainingBits)) & magicBits[idx++];
@@ -138,7 +133,7 @@ namespace hj {
 		}
 
 		void getMagicBits(UnsignedIntegerType* mBits, int totalBits, int fieldBits, int dimension) {
-			assert(totalBits / fieldBits == dimension);
+			assert(totalBits / dimension == fieldBits);
 			assert(totalBits <= numBits);
 			assert(fieldBits < sizeof(size_t) * 8); // sizeof(size_t)*8 = 64 is the maximum size of integer 
 													// that can be used as an operand for shift operator
