@@ -26,7 +26,7 @@ namespace hj {
 		const int numMagicBits = (int)log2(fieldBits) + 1;
 		const UnsignedIntegerType One = 1;
 		const UnsignedIntegerType oneShiftedByFieldBits = One << fieldBits;
-		const size_t oneShiftedByLogFieldBits = size_t(One << int(log2(fieldBits) + 1));
+		const size_t oneShiftedByLogFieldBits = size_t((Dimension - 1) * (One << int(log2(fieldBits))));
 
 		std::vector<UnsignedIntegerType> magicBits;
 
@@ -124,7 +124,7 @@ namespace hj {
 			auto x = bit_and(_v, oneShiftedByFieldBits - 1);	// take field bits
 			size_t remainingBits = oneShiftedByLogFieldBits;
 			int idx = 0;
-			while (remainingBits > 1) {
+			for (int i = 0; i < numMagicBits; ++i) {
 				x = (x | (x << remainingBits)) & magicBits[idx++];
 				remainingBits /= 2;
 			}
