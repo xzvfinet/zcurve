@@ -14,13 +14,11 @@ namespace hj {
 
 		// variadic template constructor for varying size of vector
 		template <typename... Args,
-			typename = std::enable_if<std::conjunction<std::is_convertible<Args, T>...>::value
-			&& sizeof...(Args) == nDimensions>::type
-		>
-			Vector(Args... values) : v{ values... } {
-		}
+			typename std::enable_if<std::conjunction<std::is_convertible<Args, T>...>::value
+			&& sizeof...(Args) == nDimensions>::type>
+		Vector(Args... values) : v{ values... } {}
 
-		Vector(std::array<T, nDimensions> &arr) : v(arr) {}
+		Vector(std::array<T, nDimensions> &&arr) : v(arr) {}
 
 
 #ifdef PBRT_CORE_PBRT_H

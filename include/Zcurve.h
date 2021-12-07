@@ -72,13 +72,12 @@ namespace hj {
 		}
 
 		// Specialization for hj::Vector
-		template <>
-		void order<_Vector>(
+		void order(
 			const _Vector&								pmin,
 			const _Vector&								pmax,
 			std::vector<_Vector>&						arr,
-			const std::function<_Vector&(_Vector&)>&	accessor,
-			const std::function<void(void)>&			progressUpdate) const
+			const std::function<_Vector&(_Vector&)>&	accessor = 0,
+			const std::function<void(void)>&			progressUpdate = 0) const
 		{
 			std::vector<std::pair<_Vector, UnsignedIntegerType>> ordered(
 				arr.size());
