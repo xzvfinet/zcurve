@@ -18,7 +18,11 @@ class Vector {
                                       sizeof...(Args) == nDimensions>::type>
     Vector(Args... values) : v{values...} {}
 
+    Vector(std::array<T, nDimensions>& arr) : v(arr) {}
     Vector(std::array<T, nDimensions>&& arr) : v(arr) {}
+
+    // Casting operator
+    operator std::array<T, nDimensions>() { return v; }
 
 #ifdef PBRT_CORE_PBRT_H
     Vector(pbrt::Point2<T> p) : v{p.x, p.y} {}

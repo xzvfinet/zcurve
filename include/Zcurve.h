@@ -71,7 +71,7 @@ class Zcurve {
         }
     }
 
-    // Specialization for hj::Vector
+    // Overloading for hj::Vector
     void order(const _Vector& pmin, const _Vector& pmax, std::vector<_Vector>& arr,
                const std::function<_Vector&(_Vector&)>& accessor = 0,
                const std::function<void(void)>& progressUpdate = 0) const {
@@ -90,6 +90,28 @@ class Zcurve {
                       if (progressUpdate) progressUpdate();
                       return lhs.second < rhs.second;
                   });
+
+        for (auto i = 0u; i < arr.size(); ++i) {
+            arr[i] = ordered[i].first;
+        }
+    }
+
+    // Overloading for std::array
+    void order(const _Vector& pmin, const _Vector& pmax,
+               std::vector<std::array<DataType, Dimension>>& arr) const {
+        std::vector<std::pair<_Vector, UnsignedIntegerType>> ordered(arr.size());
+
+        for (size_t i = 0; i < arr.size(); ++i) {
+            _Vector v(arr[i]);
+            auto p = normalize(v, pmin - eps, pmax + eps);
+            UnsignedIntegerType key = getMortonKey(p);
+            ordered[i] = std::make_pair(v, key);
+        }
+
+        std::sort(
+            ordered.begin(), ordered.end(),
+            [](std::pair<_Vector, UnsignedIntegerType>& lhs,
+               std::pair<_Vector, UnsignedIntegerType>& rhs) { return lhs.second < rhs.second; });
 
         for (auto i = 0u; i < arr.size(); ++i) {
             arr[i] = ordered[i].first;
